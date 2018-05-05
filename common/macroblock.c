@@ -281,7 +281,7 @@ int x264_macroblock_cache_allocate( x264_t *h )
     for( int i = 0; i < 2; i++ )
     {
         // FIXME this is probably wrong
-        int i_refs = X264_MIN(X264_REF_MAX, (i ? 1 + !!h->param.i_bframe_pyramid : h->param.i_frame_reference>>PARAM_FIELD_ENCODE) ) << PARAM_INTERLACED;
+        int i_refs = X264_MIN(X264_REF_MAX, (i ? 1 + !!h->param.i_bframe_pyramid : h->param.i_frame_reference) ) << PARAM_INTERLACED;
         if( h->param.analyse.i_weighted_pred == X264_WEIGHTP_SMART )
             i_refs = X264_MIN(X264_REF_MAX, i_refs + 1 + (BIT_DEPTH == 8)); //smart weights add two duplicate frames, one in >8-bit
 
@@ -333,13 +333,9 @@ int x264_macroblock_cache_allocate( x264_t *h )
     for( int i = 0; i < 2; i++ )
     {
         // FIXME this is probably wrong
-        int i_refs = X264_MIN(X264_REF_MAX, (i ? 1 + !!h->param.i_bframe_pyramid : h->param.i_frame_reference>>PARAM_FIELD_ENCODE) ) << PARAM_INTERLACED;
+        int i_refs = X264_MIN(X264_REF_MAX, (i ? 1 + !!h->param.i_bframe_pyramid : h->param.i_frame_reference) ) << PARAM_INTERLACED;
         if( h->param.analyse.i_weighted_pred == X264_WEIGHTP_SMART )
             i_refs = X264_MIN(X264_REF_MAX, i_refs + 1 + (BIT_DEPTH == 8)); //smart weights add two duplicate frames, one in >8-bit
-        if( PARAM_FIELD_ENCODE )
-            i_refs = X264_MIN(X264_REF_MAX, i_refs<<1);
-
-        printf("\n %i \n", i_refs);
 
         for( int j = !i; j < i_refs; j++ )
         {
