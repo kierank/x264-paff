@@ -1804,8 +1804,8 @@ void x264_slicetype_decide( x264_t *h )
         /* Any non-scenecut field following an I-field must be a P-field */
         if( PARAM_FIELD_ENCODE && !IS_X264_TYPE_I( frm->i_type ) && frm->i_frame == h->lookahead->i_last_keyframe+1 )
         {
-            frm->i_type = X264_TYPE_P;
-            frm->b_ref_opp_field = 1;
+            //frm->i_type = X264_TYPE_P;
+            //frm->b_ref_opp_field = 1;
         }
 
         if( frm->i_forced_type != X264_TYPE_AUTO && frm->i_type != frm->i_forced_type &&
