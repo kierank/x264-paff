@@ -1637,7 +1637,6 @@ x264_t *x264_encoder_open( x264_param_t *param )
     h->frames.i_delay += h->param.i_sync_lookahead;
     h->frames.i_delay += h->param.b_vfr_input;
     h->frames.i_bframe_delay = h->param.i_bframe ? (h->param.i_bframe_pyramid ? 2 : 1) : 0;
-    // FIXME what's the bframe delay for PAFF?
 
     h->frames.i_max_ref0 = h->param.i_frame_reference;
     h->frames.i_max_ref1 = X264_MIN( h->sps->vui.i_num_reorder_frames<<PARAM_FIELD_ENCODE, h->param.i_frame_reference );
