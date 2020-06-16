@@ -58,14 +58,19 @@ static void lookahead_shift( x264_sync_frame_list_t *dst, x264_sync_frame_list_t
 
 static void lookahead_update_last_nonb( x264_t *h, x264_frame_t *new_nonb )
 {
-    if( PARAM_FIELD_ENCODE && h->lookahead->penultimate_nonb )
-        x264_frame_push_unused( h, h->lookahead->penultimate_nonb );
 
-    if( !PARAM_FIELD_ENCODE && h->lookahead->last_nonb )
+    if( h->lookahead->last_nonb )
         x264_frame_push_unused( h, h->lookahead->last_nonb );
     if( PARAM_FIELD_ENCODE )
-        h->lookahead->penultimate_nonb = h->lookahead->last_nonb;
-    h->lookahead->last_nonb = new_nonb;
+    {
+        h->lookahead->last_nonb = h->lookahead->penultimate_nonb;
+        h->lookahead->penultimate_nonb = new_nonb;
+    }
+    else
+    {
+        h->lookahead->last_nonb = new_nonb;
+    }
+
     new_nonb->i_reference_count++;
 }
 
