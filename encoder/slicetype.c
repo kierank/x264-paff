@@ -1802,7 +1802,8 @@ void x264_slicetype_decide( x264_t *h )
         frm = h->lookahead->next.list[bframes];
 
         /* Any non-scenecut field following an I-field must be a P-field */
-        if( PARAM_FIELD_ENCODE && !IS_X264_TYPE_I( frm->i_type ) && frm->i_frame == h->lookahead->i_last_keyframe+1 )
+        if( PARAM_FIELD_ENCODE && !IS_X264_TYPE_I( frm->i_type ) && h->param.i_keyint_max > 1 &&
+            frm->i_frame == h->lookahead->i_last_keyframe+1 )
         {
             frm->i_type = X264_TYPE_P;
             frm->b_ref_opp_field = 1;
@@ -1918,20 +1919,19 @@ void x264_slicetype_decide( x264_t *h )
     {
         x264_mb_analysis_t a;
         int p0, p1, b;
-        p1 = b = bframes + 1;
+        p1 = b = bframes + 1 + PARAM_FIELD_ENCODE;
 
         lowres_context_init( h, &a );
 
         if( PARAM_FIELD_ENCODE )
         {
-            frames[0] = h->lookahead->penultimate_nonb;
-            frames[1] = h->lookahead->last_nonb;
+            frames[0] = h->lookahead->last_nonb;
+            frames[1] = h->lookahead->penultimate_nonb;
             memcpy( &frames[2], h->lookahead->next.list, (bframes+1) * sizeof(x264_frame_t*) );
-            p1 = b = 2;
-            if( frames[1] && IS_X264_TYPE_I( frames[1]->i_type ) )
+            if( IS_X264_TYPE_I( h->lookahead->next.list[bframes]->i_type ) )
+                p0 = bframes + 1 + PARAM_FIELD_ENCODE;
+            else if( frames[1] && IS_X264_TYPE_I( frames[1]->i_type ) ) // P-field following an I-field
                 p0 = 1;
-            else if( IS_X264_TYPE_I( h->lookahead->next.list[bframes]->i_type ) )
-                p0 = bframes + 2;
             else // P
                 p0 = 0;
         }
