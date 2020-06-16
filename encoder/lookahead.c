@@ -80,7 +80,7 @@ static void lookahead_slicetype_decide( x264_t *h )
     x264_slicetype_decide( h );
 
     lookahead_update_last_nonb( h, h->lookahead->next.list[0] );
-    int shift_frames = h->lookahead->last_nonb->i_bframes + 1;
+    int shift_frames = h->lookahead->last_nonb ? h->lookahead->last_nonb->i_bframes + 1 : 1;
 
     x264_pthread_mutex_lock( &h->lookahead->ofbuf.mutex );
     while( h->lookahead->ofbuf.i_size == h->lookahead->ofbuf.i_max_size )
@@ -246,7 +246,7 @@ void x264_lookahead_get_frames( x264_t *h )
 
         x264_slicetype_decide( h );
         lookahead_update_last_nonb( h, h->lookahead->next.list[0] );
-        int shift_frames = h->lookahead->last_nonb->i_bframes + 1;
+        int shift_frames = h->lookahead->last_nonb ? h->lookahead->last_nonb->i_bframes + 1 : 1;
         lookahead_shift( &h->lookahead->ofbuf, &h->lookahead->next, shift_frames );
 
         /* For MB-tree and VBV lookahead, we have to perform propagation analysis on I-frames too. */
