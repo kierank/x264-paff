@@ -1658,7 +1658,7 @@ x264_t *x264_encoder_open( x264_param_t *param )
     h->frames.i_poc_last_open_gop = -1;
 
     CHECKED_MALLOCZERO( h->cost_table, sizeof(*h->cost_table) );
-    CHECKED_MALLOCZERO( h->frames.unused[0], (h->frames.i_delay + 3) * sizeof(x264_frame_t *) );
+    CHECKED_MALLOCZERO( h->frames.unused[0], (h->frames.i_delay + 3 + PARAM_FIELD_ENCODE) * sizeof(x264_frame_t *) );
     /* Allocate room for max refs plus a few extra just in case. */
     CHECKED_MALLOCZERO( h->frames.unused[1], (h->i_thread_frames + X264_REF_MAX + 4) * sizeof(x264_frame_t *) );
     CHECKED_MALLOCZERO( h->frames.current, (h->param.i_sync_lookahead + h->param.i_bframe
