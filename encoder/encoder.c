@@ -97,14 +97,14 @@ static void frame_dump( x264_t *h )
     int frame_size = FRAME_SIZE( h->param.i_height * (1+PARAM_FIELD_ENCODE) * h->param.i_width * sizeof(pixel) );
     if( !fseek( f, (int64_t)(h->fdec->i_frame >> PARAM_FIELD_ENCODE) * frame_size, SEEK_SET ) )
     {
-        if( PARAM_FIELD_ENCODE && h->sh.b_bottom_field && !fseek( f, (uint64_t)h->param.i_width, SEEK_CUR ) )
+        if( PARAM_FIELD_ENCODE && h->sh.b_bottom_field && fseek( f, (uint64_t)h->param.i_width, SEEK_CUR ) )
             goto end;
 
         for( int p = 0; p < (CHROMA444 ? 3 : 1); p++ )
             for( int y = 0; y < h->param.i_height; y++ )
             {
                 fwrite( &h->fdec->plane[p][y*h->fdec->i_stride[p]], sizeof(pixel), h->param.i_width, f );
-                if( PARAM_FIELD_ENCODE && !fseek( f, h->param.i_width, SEEK_CUR ) )
+                if( PARAM_FIELD_ENCODE && fseek( f, h->param.i_width, SEEK_CUR ) )
                     goto end;
             }
 
@@ -119,19 +119,19 @@ static void frame_dump( x264_t *h )
                 h->mc.plane_copy_deinterleave( planeu, cw, planev, cw, h->fdec->plane[1], h->fdec->i_stride[1], cw, ch );
                 if( PARAM_FIELD_ENCODE )
                 {
-                    if( h->sh.b_bottom_field && !fseek( f, (int64_t)(-(h->param.i_width>>1)), SEEK_CUR ) )
+                    if( h->sh.b_bottom_field && fseek( f, (int64_t)(-(h->param.i_width>>1)), SEEK_CUR ) )
                         goto end;
 
                     for( int y = 0; y < ch; y++ )
                     {
                         fwrite( &planeu[y*cw], sizeof(pixel), cw, f );
-                        if( !fseek( f, (uint64_t)cw, SEEK_CUR ) )
+                        if( fseek( f, (uint64_t)cw, SEEK_CUR ) )
                             goto end;
                     }
                     for( int y = 0; y < ch; y++ )
                     {
                         fwrite( &planev[y*cw], sizeof(pixel), cw, f );
-                        if( !fseek( f, (uint64_t)cw, SEEK_CUR ) )
+                        if( fseek( f, (uint64_t)cw, SEEK_CUR ) )
                             goto end;
                     }
                 }
