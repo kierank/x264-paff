@@ -90,9 +90,10 @@ static void lookahead_slicetype_decide( x264_t *h )
     lookahead_shift( &h->lookahead->ofbuf, &h->lookahead->next, shift_frames );
     x264_pthread_mutex_unlock( &h->lookahead->next.mutex );
 
-    // FIXME this probably will be broken
+    // FIXME in field mode this needs might need changing
     /* For MB-tree and VBV lookahead, we have to perform propagation analysis on I-frames too. */
-    if( h->lookahead->b_analyse_keyframe && IS_X264_TYPE_I( h->lookahead->last_nonb->i_type ) )
+    if( h->lookahead->b_analyse_keyframe && h->lookahead->last_nonb &&
+        IS_X264_TYPE_I( h->lookahead->last_nonb->i_type ) )
         x264_slicetype_analyse( h, shift_frames );
 
     x264_pthread_mutex_unlock( &h->lookahead->ofbuf.mutex );
@@ -249,8 +250,10 @@ void x264_lookahead_get_frames( x264_t *h )
         int shift_frames = h->lookahead->last_nonb ? h->lookahead->last_nonb->i_bframes + 1 : 1;
         lookahead_shift( &h->lookahead->ofbuf, &h->lookahead->next, shift_frames );
 
+        // FIXME in field mode this needs might need changing
         /* For MB-tree and VBV lookahead, we have to perform propagation analysis on I-frames too. */
-        if( h->lookahead->b_analyse_keyframe && IS_X264_TYPE_I( h->lookahead->last_nonb->i_type ) )
+        if( h->lookahead->b_analyse_keyframe && h->lookahead->last_nonb &&
+            IS_X264_TYPE_I( h->lookahead->last_nonb->i_type ) )
             x264_slicetype_analyse( h, shift_frames );
 
         lookahead_encoder_shift( h );
