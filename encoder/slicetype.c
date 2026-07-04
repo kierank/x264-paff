@@ -1519,7 +1519,8 @@ void x264_slicetype_analyse( x264_t *h, int intra_minigop )
         return;
     }
 
-    if( PARAM_FIELD_ENCODE && frames[0]->i_frame ^ 1 )
+    /* A field following the second field of an I anchor must be a P-field. */
+    if( PARAM_FIELD_ENCODE && (frames[0]->i_frame & 1) )
         frames[1]->i_type = X264_TYPE_P;
 
 #if HAVE_OPENCL
