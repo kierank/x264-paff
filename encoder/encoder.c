@@ -3661,7 +3661,9 @@ int     x264_encoder_encode( x264_t *h,
         }
         else if( h->fenc->i_type == X264_TYPE_P )
         {
-            int pocdiff = (h->fdec->i_poc - h->fref[0][0]->i_poc)/2;
+            /* POC advances by 2 per progressive frame but by 1 per field, so divide
+             * by the same factor used to compute i_poc to get the picture count. */
+            int pocdiff = (h->fdec->i_poc - h->fref[0][0]->i_poc) / (2 - PARAM_FIELD_ENCODE);
             float increment = X264_MAX( ((float)h->mb.i_mb_width-1) / h->param.i_keyint_max, 1 );
             h->fdec->f_pir_position = h->fref[0][0]->f_pir_position;
             h->fdec->i_frames_since_pir = h->fref[0][0]->i_frames_since_pir + pocdiff;
