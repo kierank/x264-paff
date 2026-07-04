@@ -3764,6 +3764,11 @@ int     x264_encoder_encode( x264_t *h,
         if( h->fenc->i_type != X264_TYPE_IDR )
         {
             int time_to_recovery = h->param.b_open_gop ? 0 : X264_MIN( h->mb.i_mb_width - 1, h->param.i_keyint_max ) + h->param.i_bframe - 1;
+            /* The sweep length above is counted in coded pictures, but recovery_frame_cnt
+             * is in frame_num units, which advance once per field pair. Convert, rounding
+             * up so the decoder never signals recovery before the refresh completes. */
+            if( PARAM_FIELD_ENCODE && !h->param.b_open_gop )
+                time_to_recovery = (time_to_recovery + 1) >> 1;
             nal_start( h, NAL_SEI, NAL_PRIORITY_DISPOSABLE );
             x264_sei_recovery_point_write( h, &h->out.bs, time_to_recovery );
             if( nal_end( h ) )
