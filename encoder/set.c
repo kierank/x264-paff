@@ -819,10 +819,14 @@ int x264_validate_levels( x264_t *h, int verbose )
     while( l->level_idc != 0 && l->level_idc != h->param.i_level_idc )
         l++;
 
+    /* In field-encode mode i_mb_height is the height of a single field, so the
+     * full frame is twice as tall; MBAFF already stores the full frame height. */
+    int frame_mb_height = h->sps->i_mb_height << !(h->sps->b_frame_mbs_only || h->sps->b_half_height);
     if( l->frame_size < mbs
-        || l->frame_size*8 < h->sps->i_mb_width * h->sps->i_mb_width )
+        || l->frame_size*8 < h->sps->i_mb_width * h->sps->i_mb_width
+        || l->frame_size*8 < frame_mb_height * frame_mb_height )
         ERROR( "frame MB size (%dx%d) > level limit (%d)\n",
-               h->sps->i_mb_width, h->sps->i_mb_height, l->frame_size );
+               h->sps->i_mb_width, frame_mb_height, l->frame_size );
     if( dpb > l->dpb )
         ERROR( "DPB size (%d frames, %d mbs) > level limit (%d frames, %d mbs)\n",
                 h->sps->vui.i_max_dec_frame_buffering, dpb, l->dpb / mbs, l->dpb );
