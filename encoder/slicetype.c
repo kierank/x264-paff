@@ -1868,15 +1868,15 @@ void x264_slicetype_decide( x264_t *h )
             frm->b_keyframe = 1;
             if( bframes > 0 )
             {
-                bframes -= 1+PARAM_FIELD_ENCODE;
+                /* Field encoding forces i_bframe to 0, so bframes is always 0 here
+                 * and this branch is progressive/MBAFF-only. */
+                bframes--;
                 h->lookahead->next.list[bframes]->i_type = X264_TYPE_P;
-                if( PARAM_FIELD_ENCODE )
-                    h->lookahead->next.list[bframes+1]->i_type = X264_TYPE_P;
             }
         }
 
         if( bframes == h->param.i_bframe ||
-            !h->lookahead->next.list[bframes+1+PARAM_FIELD_ENCODE] )
+            !h->lookahead->next.list[bframes+1] )
         {
             if( IS_X264_TYPE_B( frm->i_type ) )
                 x264_log( h, X264_LOG_WARNING, "specified frame type is not compatible with max B-frames, frame %i\n", frm->i_frame );
@@ -1899,9 +1899,11 @@ void x264_slicetype_decide( x264_t *h )
 
     if( PARAM_FIELD_ENCODE )
     {
-        h->lookahead->next.list[bframes+0]->i_bframes = 0;
+        /* Field encoding has no B-frames (bframes is always 0 here); prime the
+         * i_bframes count for this field and the next one in the buffer. */
+        h->lookahead->next.list[0]->i_bframes = 0;
         if( lookahead_size > 1 )
-            h->lookahead->next.list[bframes+1]->i_bframes = bframes;
+            h->lookahead->next.list[1]->i_bframes = 0;
     }
     else
         h->lookahead->next.list[bframes]->i_bframes = bframes;
@@ -1980,7 +1982,9 @@ void x264_slicetype_decide( x264_t *h )
     int i_coded = h->lookahead->next.list[0]->i_frame;
     if( bframes )
     {
-        int idx_list[2] = { brefs+1+PARAM_FIELD_ENCODE, 1+PARAM_FIELD_ENCODE };
+        /* Field encoding has no B-frames, so bframes is always 0 and this
+         * reorder is progressive/MBAFF-only. */
+        int idx_list[2] = { brefs+1, 1 };
         for( int i = 0; i < bframes; i++ )
         {
             int idx = idx_list[h->lookahead->next.list[i]->i_type == X264_TYPE_BREF]++;
@@ -1989,11 +1993,6 @@ void x264_slicetype_decide( x264_t *h )
         }
         frames[0] = h->lookahead->next.list[bframes];
         frames[0]->i_reordered_pts = h->lookahead->next.list[0]->i_pts;
-        if( PARAM_FIELD_ENCODE )
-        {
-            frames[1] = h->lookahead->next.list[bframes+1];
-            frames[1]->i_reordered_pts = h->lookahead->next.list[1]->i_pts;
-        }
         memcpy( h->lookahead->next.list, frames, (bframes+1) * sizeof(x264_frame_t*) );
     }
 
