@@ -2149,17 +2149,14 @@ static inline void reference_check_reorder( x264_t *h )
              * as the field to be encoded */
             if( h->i_ref[list] > 0 && ((h->fenc->i_frame ^ h->fref[list][0]->i_frame) & 1))
             {
-                //printf("\n here %i \n", h->fenc->i_frame);
                 h->b_ref_reorder[list] = 1;
                 return;
             }
 
-            /* FIXME: is there a cleaner way of doing this */
             for( int i = 0; i < h->i_ref[list] - 1; i++ )
             {
                 int dist = reference_distance( h, h->fref[list][i] ) > reference_distance( h, h->fref[list][i+1] );
                 int poc_diff = h->fref[list][i+1]->i_poc - h->fref[list][i]->i_poc;
-                //printf("\n %i %i %i %i %i \n", h->fenc->i_frame, i, dist, h->fref[list][i]->i_frame, h->fref[list][i+1]->i_frame );
                 /* P and B-frames use different default orders. */
                 if( h->sh.i_type == SLICE_TYPE_P ? dist : list == 1 ? poc_diff < 0 : poc_diff > 0 )
                 {
