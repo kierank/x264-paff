@@ -58,16 +58,22 @@ static void lookahead_shift( x264_sync_frame_list_t *dst, x264_sync_frame_list_t
 
 static void lookahead_update_last_nonb( x264_t *h, x264_frame_t *new_nonb )
 {
-
-    if( h->lookahead->last_nonb )
-        x264_frame_push_unused( h, h->lookahead->last_nonb );
+    /* last_nonb always holds the most recently decided non-B frame/field, and
+     * penultimate_nonb (field-encode only) the one before that, matching their
+     * names. Every consumer of last_nonb relies on that "most recent" meaning;
+     * only the field-encode RC frame-cost window needs the older frame too, via
+     * penultimate_nonb. */
     if( PARAM_FIELD_ENCODE )
     {
-        h->lookahead->last_nonb = h->lookahead->penultimate_nonb;
-        h->lookahead->penultimate_nonb = new_nonb;
+        if( h->lookahead->penultimate_nonb )
+            x264_frame_push_unused( h, h->lookahead->penultimate_nonb );
+        h->lookahead->penultimate_nonb = h->lookahead->last_nonb;
+        h->lookahead->last_nonb = new_nonb;
     }
     else
     {
+        if( h->lookahead->last_nonb )
+            x264_frame_push_unused( h, h->lookahead->last_nonb );
         h->lookahead->last_nonb = new_nonb;
     }
 

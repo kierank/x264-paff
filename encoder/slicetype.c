@@ -1926,8 +1926,10 @@ void x264_slicetype_decide( x264_t *h )
 
         if( PARAM_FIELD_ENCODE )
         {
-            frames[0] = h->lookahead->last_nonb;
-            frames[1] = h->lookahead->penultimate_nonb;
+            /* last_nonb is the immediately preceding field; penultimate_nonb is
+             * the one before that. This window wants oldest-to-newest order. */
+            frames[0] = h->lookahead->penultimate_nonb;
+            frames[1] = h->lookahead->last_nonb;
             memcpy( &frames[2], h->lookahead->next.list, (bframes+1) * sizeof(x264_frame_t*) );
             if( IS_X264_TYPE_I( h->lookahead->next.list[bframes]->i_type ) )
                 p0 = bframes + 1 + PARAM_FIELD_ENCODE;
