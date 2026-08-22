@@ -1519,10 +1519,6 @@ void x264_slicetype_analyse( x264_t *h, int intra_minigop )
         return;
     }
 
-    /* A field following the second field of an I anchor must be a P-field. */
-    if( PARAM_FIELD_ENCODE && (frames[0]->i_frame & 1) )
-        frames[1]->i_type = X264_TYPE_P;
-
 #if HAVE_OPENCL
     x264_opencl_slicetype_prep( h, frames, num_frames, a.i_lambda );
 #endif
@@ -1796,16 +1792,38 @@ void x264_slicetype_decide( x264_t *h )
     for( bframes = 0, brefs = 0;; bframes++ )
     {
         frm = h->lookahead->next.list[bframes];
-        // FIXME better place to do this?
         if( PARAM_FIELD_ENCODE )
-            frm->b_ref_opp_field = 0;
-
-        /* Any non-scenecut field following an I-field must be a P-field */
-        if( PARAM_FIELD_ENCODE && !IS_X264_TYPE_I( frm->i_type ) && h->param.i_keyint_max > 1 &&
-            frm->i_frame == h->lookahead->i_last_keyframe+1 )
         {
-            frm->i_type = X264_TYPE_P;
-            frm->b_ref_opp_field = 1;
+            /* A keyframe deferred off a second field lands here, on the first
+             * field of the next frame. */
+            if( h->lookahead->b_keyframe_pending && !(frm->i_frame & 1) )
+            {
+                if( !IS_X264_TYPE_I( frm->i_type ) )
+                    frm->i_type = h->param.b_open_gop ? X264_TYPE_I : X264_TYPE_IDR;
+                h->lookahead->b_keyframe_pending = 0;
+            }
+
+            /* A keyframe is coded as an Ip pair: the second field of an I-field's
+             * frame is a P-field predicting from its complementary field.  Key off
+             * the previously coded field's type rather than i_last_keyframe -- a
+             * scenecut I within min-keyint never becomes a keyframe -- so that this
+             * agrees with the frame cost window picked below, and hence with the
+             * i_cost_est slot x264_rc_analyse_slice() reads back. */
+            frm->b_ref_opp_field = h->param.i_keyint_max > 1 && h->lookahead->last_nonb
+                                && IS_X264_TYPE_I( h->lookahead->last_nonb->i_type );
+            if( frm->b_ref_opp_field && !IS_X264_TYPE_I( frm->i_type ) )
+                frm->i_type = X264_TYPE_P;
+
+            /* Keep keyframes on the first field of a frame.  An I/IDR on a second
+             * field leaves that source frame's two halves with different frame_num,
+             * so a decoder sees two unpaired fields instead of a complementary
+             * pair; defer the keyframe to the next first field instead. */
+            if( h->param.i_keyint_max > 1 && (frm->i_frame & 1) && IS_X264_TYPE_I( frm->i_type )
+                && !IS_X264_TYPE_I( frm->i_forced_type ) )
+            {
+                frm->i_type = X264_TYPE_P;
+                h->lookahead->b_keyframe_pending = 1;
+            }
         }
 
         if( frm->i_forced_type != X264_TYPE_AUTO && frm->i_type != frm->i_forced_type &&
@@ -1933,7 +1951,9 @@ void x264_slicetype_decide( x264_t *h )
             memcpy( &frames[2], h->lookahead->next.list, (bframes+1) * sizeof(x264_frame_t*) );
             if( IS_X264_TYPE_I( h->lookahead->next.list[bframes]->i_type ) )
                 p0 = bframes + 1 + PARAM_FIELD_ENCODE;
-            else if( frames[1] && IS_X264_TYPE_I( frames[1]->i_type ) ) // P-field following an I-field
+            else if( h->lookahead->next.list[bframes]->b_ref_opp_field )
+                /* second field of an Ip pair: predicted from the complementary
+                 * I-field (frames[1]), not from the same-parity field */
                 p0 = 1;
             else // P
                 p0 = 0;
@@ -2029,7 +2049,6 @@ int x264_rc_analyse_slice( x264_t *h )
             p1--;
             b--;
         }
-        frames = &h->fenc - b;
     }
     else //B
     {

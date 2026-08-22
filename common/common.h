@@ -227,6 +227,9 @@ typedef struct x264_lookahead_t
     int                           i_slicetype_length;
     x264_frame_t                  *last_nonb;
     x264_frame_t                  *penultimate_nonb;
+    int                           b_keyframe_pending; /* field encoding: a keyframe
+                                     that fell on a second field, deferred to the
+                                     next first field so the pair isn't split */
     x264_pthread_t                thread_handle;
     x264_sync_frame_list_t        ifbuf;
     x264_sync_frame_list_t        next;
