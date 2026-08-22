@@ -41,6 +41,7 @@ FIELD_MATRIX=(
     "prog_fake_interlaced|prog|--crf 23 --fake-interlaced --bframes 2"
     "prog_threads4|prog|--crf 23 --ref 4 --bframes 3 --threads 4"
     "prog_scenecut_in_minkeyint|prog|--crf 23 --ref 3 --bframes 3 --keyint 240 --min-keyint 60"
+    "prog_crop_rect|prog|--crf 23 --ref 3 --crop-rect 0,4,0,4"
     "prog_sliced_threads|prog|--crf 23 --ref 3 --sliced-threads --threads 4"
 
     "mbaff_tff_crf|mbaff|--crf 23 --tff --ref 4 --bframes 3"
@@ -66,6 +67,9 @@ FIELD_MATRIX=(
     "field_tff_keyint1|field|--field-encode --tff --qp 26 --keyint 1"
     "field_tff_lossless|field|--field-encode --tff --qp 0 --ref 2"
     "field_tff_cavlc|field|--field-encode --tff --crf 23 --no-cabac --ref 3"
+    # crop_rect is halved into field lines by the command line, so the SPS crop
+    # this produces should take off 4 frame lines top and bottom, not 8
+    "field_tff_crop_rect|field|--field-encode --tff --crf 23 --ref 3 --crop-rect 0,4,0,4"
     # min-keyint is large enough that both of the clip's scene changes fall
     # inside it, so they become I fields that never turn into keyframes -- the
     # case where b_ref_opp_field and the frame cost window used to disagree.
