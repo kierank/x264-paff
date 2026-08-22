@@ -22,3 +22,53 @@ cd ../..
 ./x264/x264 input.yuv --dump-yuv fdec.yuv -o output.h264
 ./JM/bin/ldecod.exe -i output.h264 -o ref.yuv
 diff ref.yuv fdec.yuv
+
+=== Field encoding: proving progressive and MBAFF are unaffected ===
+
+The field encoding work (--field-encode) touches shared code, so the gate for it
+is that progressive and MBAFF output does not move.  tools/test_field_regress.sh
+encodes a configuration matrix twice, once with a reference build of an older
+commit and once with the build under test, and compares the two streams:
+
+    make
+    tools/test_field_regress.sh
+
+Progressive and MBAFF rows must come out with identical coded data.  The SEI is
+excluded from the comparison because it carries X264_BUILD and the option
+string; tools/nal_diff.py reports whether a stream pair is byte-identical,
+identical apart from SEI, or genuinely different, and where.  --field-encode
+rows are expected to differ, and are listed so it is visible which of them a
+change moved.
+
+The reference build is made in a git worktree on first run.  It must be
+configured the same way as the build under test or the comparison means
+nothing; pass CONFIGURE_FLAGS to match, and note that the script cross-checks
+bit depth and chroma format from x264 --version.  REF selects the commit
+(default: the one before the field encoding fixes) and REF_X264 skips the build
+entirely if a reference binary already exists.
+
+The configuration matrix lives in tools/field_matrix.sh and covers the shared
+paths that field encoding reaches into: weighted prediction duplicates and the
+deblocking reference table, the chroma parity offset in motion search, lossless
+prediction, the temporal mv predictor, reference list reordering, level
+validation, and scenecut and keyframe placement.  The clip is synthesised by
+tools/make_test_clip.py, so no test media is committed and no ffmpeg is needed;
+it contains motion in both axes, a scene change on a frame boundary, and a
+second scene change in the middle of a frame so that in field coding it lands on
+a second field.
+
+    tools/test_field_regress.sh encode    encode the matrix with one build only,
+                                          as a crash smoke test
+    tools/test_field_regress.sh clip      just generate the clip
+
+Field stream conformance is separate from the above.  The JM round-trip at the
+top of this file applies unchanged, and tools/check_hrd.py is an independent
+Annex C CPB simulator for --nal-hrd cbr streams, which checks for underflow and
+overflow at access unit granularity -- which under field encoding means per
+field, since each field is its own access unit:
+
+    tools/check_hrd.py stream.264 [-v]
+
+One thing none of this covers: x264_encoder_reconfig() is not reachable from the
+command line, so the field unit conversions being applied once rather than on
+every reconfig has to be checked from a library caller.
