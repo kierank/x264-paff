@@ -147,7 +147,11 @@ void x264_sps_init( x264_sps_t *sps, int i_id, x264_param_t *param )
     sps->i_num_ref_frames = X264_MIN(X264_REF_MAX >> 1, X264_MAX4(param->i_frame_reference>>param->b_field_encode, 1 + sps->vui.i_num_reorder_frames,
                             param->i_bframe_pyramid ? 4 : 1, param->i_dpb_size));
     sps->i_num_ref_frames -= param->i_bframe_pyramid == X264_B_PYRAMID_STRICT;
-    if( param->i_keyint_max == 1 )
+    /* All-intra streams reference nothing, so the DPB can be signalled as empty.
+     * Not for field pictures though: hardware decoders size their DPB from
+     * max_num_ref_frames and need a slot to hold the first field of a pair, and
+     * some of them reject frame_mbs_only_flag == 0 with a zero-sized DPB. */
+    if( param->i_keyint_max == 1 && !param->b_field_encode )
     {
         sps->i_num_ref_frames = 0;
         sps->vui.i_max_dec_frame_buffering = 0;
