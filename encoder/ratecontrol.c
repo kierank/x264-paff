@@ -53,7 +53,7 @@ typedef struct
     char direct_mode;
     int16_t weight[3][2];
     int16_t i_weight_denom[2];
-    int refcount[16];
+    int refcount[X264_REF_MAX];
     int refs;
     int64_t i_duration;
     int64_t i_cpb_duration;
@@ -584,9 +584,9 @@ fail:
 int x264_reference_build_list_optimal( x264_t *h )
 {
     ratecontrol_entry_t *rce = h->rc->rce;
-    x264_frame_t *frames[16];
-    x264_weight_t weights[16][3];
-    int refcount[16];
+    x264_frame_t *frames[X264_REF_MAX];
+    x264_weight_t weights[X264_REF_MAX][3];
+    int refcount[X264_REF_MAX];
 
     if( rce->refs != h->i_ref[0] )
         return -1;
@@ -594,7 +594,7 @@ int x264_reference_build_list_optimal( x264_t *h )
     memcpy( frames, h->fref[0], sizeof(frames) );
     memcpy( refcount, rce->refcount, sizeof(refcount) );
     memcpy( weights, h->fenc->weight, sizeof(weights) );
-    memset( &h->fenc->weight[1][0], 0, sizeof(x264_weight_t[15][3]) );
+    memset( &h->fenc->weight[1][0], 0, sizeof(x264_weight_t[X264_REF_MAX-1][3]) );
 
     /* For now don't reorder ref 0; it seems to lower quality
        in most cases due to skips. */
@@ -1076,7 +1076,7 @@ int x264_ratecontrol_new( x264_t *h )
             if( !p )
                 goto parse_error;
             p += 4;
-            for( ref = 0; ref < 16; ref++ )
+            for( ref = 0; ref < X264_REF_MAX; ref++ )
             {
                 if( sscanf( p, " %d", &rce->refcount[ref] ) != 1 )
                     break;
