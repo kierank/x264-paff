@@ -1817,8 +1817,12 @@ void x264_slicetype_decide( x264_t *h )
             /* Keep keyframes on the first field of a frame.  An I/IDR on a second
              * field leaves that source frame's two halves with different frame_num,
              * so a decoder sees two unpaired fields instead of a complementary
-             * pair; defer the keyframe to the next first field instead. */
-            if( h->param.i_keyint_max > 1 && (frm->i_frame & 1) && IS_X264_TYPE_I( frm->i_type )
+             * pair; defer the keyframe to the next first field instead.
+             * Not in the second pass: the types come from the first pass, which
+             * already deferred, and overriding them there would silently put the
+             * two passes on different frame types. */
+            if( h->param.i_keyint_max > 1 && !h->param.rc.b_stat_read
+                && (frm->i_frame & 1) && IS_X264_TYPE_I( frm->i_type )
                 && !IS_X264_TYPE_I( frm->i_forced_type ) )
             {
                 frm->i_type = X264_TYPE_P;
