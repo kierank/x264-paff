@@ -232,7 +232,11 @@ static void slice_header_init( x264_t *h, x264_slice_header_t *sh,
 
                 int diff = pic_num - pred_frame_num;
                 sh->ref_pic_list_order[list][i].idc = ( diff > 0 );
-                sh->ref_pic_list_order[list][i].arg = (abs(diff) - 1) & ((1 << sps->i_log2_max_frame_num) - 1);
+                /* abs_diff_pic_num_minus1 is reduced modulo MaxPicNum, which is
+                 * 2*MaxFrameNum for field pictures.  diff == 0 -- a weightp
+                 * duplicate of the previous entry -- relies on that wrap to say
+                 * "the same picture again" as MaxPicNum-1. */
+                sh->ref_pic_list_order[list][i].arg = (abs(diff) - 1) & ((1 << (sps->i_log2_max_frame_num + PARAM_FIELD_ENCODE)) - 1);
                 pred_frame_num = pic_num;
             }
         }
