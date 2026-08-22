@@ -1052,15 +1052,17 @@ int x264_param_parse( x264_param_t *p, const char *name, const char *value )
     }
     OPT("tff")
     {
+        /* --tff/--bff select the field order; they enable MBAFF only when field
+         * encoding is off, and a false value must still disable interlacing as
+         * it did before field encoding existed. */
         p->b_tff = atobool(value);
-        if( !p->b_field_encode )
-            p->b_interlaced = 1;
+        p->b_interlaced = p->b_tff && !p->b_field_encode;
     }
     OPT("bff")
     {
-        p->b_tff = !atobool(value);
-        if( !p->b_field_encode )
-            p->b_interlaced = 1;
+        int b_bff = atobool(value);
+        p->b_tff = !b_bff;
+        p->b_interlaced = b_bff && !p->b_field_encode;
     }
     OPT("constrained-intra")
         p->b_constrained_intra = atobool(value);
