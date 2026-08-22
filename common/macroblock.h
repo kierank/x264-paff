@@ -417,6 +417,20 @@ static ALWAYS_INLINE uint64_t pack32to64( uint32_t a, uint32_t b )
 #   define pack_pixel_2to4 pack16to32
 #endif
 
+/* Chroma in 4:2:0 is offset when motion compensating from a field of opposite
+ * parity.  Under MBAFF the reference parity is the low bit of the field-doubled
+ * reference index and the current parity is the macroblock row parity, so the
+ * offset must be evaluated per-macroblock.  For field pictures both parities are
+ * fixed for the whole slice and the offset is precomputed per reference entry by
+ * x264_macroblock_slice_init().  Returns a quarter-luma-sample offset; only
+ * meaningful when MB_INTERLACED && CHROMA_V_SHIFT. */
+static ALWAYS_INLINE int x264_mb_chroma_mvy_offset( x264_t *h, int i_list, int i_ref )
+{
+    if( SLICE_MBAFF )
+        return (i_ref & 1) ? (h->mb.i_mb_y & 1)*4 - 2 : 0;
+    return h->mb.i_mvy_offset[i_list][i_ref];
+}
+
 static ALWAYS_INLINE int x264_mb_predict_intra4x4_mode( x264_t *h, int idx )
 {
     const int ma = h->mb.cache.intra4x4_pred_mode[x264_scan8[idx] - 1];

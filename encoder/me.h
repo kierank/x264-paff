@@ -39,6 +39,9 @@ typedef struct
     uint16_t *p_cost_mv; /* lambda * nbits for each possible mv */
     int      i_ref_cost;
     int      i_ref;
+    int      i_list;     /* which reference list i_ref indexes; set by LOAD_HPELS.
+                            Needed to pick the per-list chroma parity offset when
+                            coding field pictures. */
     const x264_weight_t *weight;
 
     pixel *p_fref[12];

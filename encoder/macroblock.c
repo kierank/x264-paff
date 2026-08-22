@@ -669,8 +669,10 @@ static ALWAYS_INLINE void macroblock_encode_internal( x264_t *h, int plane_count
             if( chroma )
             {
                 int v_shift = CHROMA_V_SHIFT;
-                if( v_shift && PARAM_FIELD_ENCODE )
-                    mvy += h->mb.i_mvy_offset[0][0];
+                /* An opposite-parity reference field needs the chroma offset even
+                 * for mv0, so apply it before the mv0 special case below. */
+                if( v_shift & MB_INTERLACED )
+                    mvy += x264_mb_chroma_mvy_offset( h, 0, 0 );
                 int height = 16 >> v_shift;
 
                 /* Special case for mv0, which is (of course) very common in P-skip mode. */
@@ -1040,9 +1042,10 @@ static ALWAYS_INLINE int macroblock_probe_skip_internal( x264_t *h, int b_bidir,
 
         if( !b_bidir )
         {
-            int v_shift = CHROMA_V_SHIFT;
-            if( v_shift && PARAM_FIELD_ENCODE )
-                mvp[1] += h->mb.i_mvy_offset[0][0];
+            /* As in macroblock_encode_internal: the chroma offset for an
+             * opposite-parity reference field applies to mv0 as well. */
+            if( CHROMA_V_SHIFT & MB_INTERLACED )
+                mvp[1] += x264_mb_chroma_mvy_offset( h, 0, 0 );
 
             /* Special case for mv0, which is (of course) very common in P-skip mode. */
             if( M32( mvp ) )
