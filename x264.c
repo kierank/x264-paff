@@ -1907,14 +1907,17 @@ static int encode( x264_param_t *param, cli_opt_t *opt )
     if( param->b_field_encode )
     {
         FAIL_IF_ERROR2( param->b_vfr_input, "field encoding is not compatible with vfr\n" );
+        FAIL_IF_ERROR2( param->i_height & 1, "field encoding needs an even frame height (%d)\n", param->i_height );
         param->i_fps_num <<= 1;
         param->i_height >>= 1;
     }
 
+    FAIL_IF_ERROR2( opt->i_pulldown && param->b_field_encode,
+                    "field encoding is not compatible with pulldown\n" );
+
     /* set up pulldown */
-    if( opt->i_pulldown )
+    if( opt->i_pulldown && !param->b_vfr_input )
     {
-        FAIL_IF_ERROR2( param->b_field_encode, "field encoding is not compatible with pulldown\n" );
         param->b_pulldown = 1;
         param->b_pic_struct = 1;
         pulldown = &pulldown_values[opt->i_pulldown];
