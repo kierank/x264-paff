@@ -478,7 +478,15 @@ void x264_macroblock_slice_init( x264_t *h )
                 /* Mask off high bits to avoid frame num collisions with -1/-2.
                  * In current x264 frame num values don't cover a range of more
                  * than 32, so 6 bits is enough for uniqueness. */
-                if( !MB_INTERLACED )
+                if( PARAM_FIELD_ENCODE )
+                    /* Every list entry is one reference field, so identify it by
+                     * frame_num plus field parity: the two fields of a frame share
+                     * a frame_num and must not collide, while a weightp duplicate
+                     * (a copy of its source picture) must match its source.  The
+                     * MBAFF decomposition below is wrong here -- SLICE_MBAFF is 0
+                     * so the index is not field-doubled, but MB_INTERLACED is 1. */
+                    deblock_ref_table(i) = ((h->fref[0][i]->i_frame_num&63)<<1) + (h->fref[0][i]->i_frame&1);
+                else if( !MB_INTERLACED )
                     deblock_ref_table(i) = h->fref[0][i]->i_frame_num&63;
                 else
                     deblock_ref_table(i) = ((h->fref[0][i>>1]->i_frame_num&63)<<1) + (i&1);
