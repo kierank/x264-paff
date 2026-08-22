@@ -1053,11 +1053,17 @@ static int validate_parameters( x264_t *h, int b_open )
 
     if( PARAM_FIELD_ENCODE )
     {
+        /* --ref counts frames; internally a reference is one field.  This is
+         * re-applied on every reconfig because encoder_try_reconfig() re-copies
+         * i_frame_reference from the caller (which passes frame units) -- unlike
+         * the keyint conversions below, which are not reconfigurable and must
+         * therefore only run once, at open. */
         if( !(h->param.b_intra_refresh && h->param.i_frame_reference == 1) )
         {
             h->param.i_frame_reference <<= 1;
             h->param.i_frame_reference = x264_clip3( h->param.i_frame_reference, 1, X264_REF_MAX );
         }
+        h->param.i_dpb_size = x264_clip3( h->param.i_dpb_size, 1, X264_REF_MAX >> 1 );
     }
     else
     {
@@ -1072,9 +1078,12 @@ static int validate_parameters( x264_t *h, int b_open )
         x264_log( h, X264_LOG_WARNING, "subme=0 + direct=temporal is not supported\n" );
         h->param.analyse.i_direct_mv_pred = X264_DIRECT_PRED_SPATIAL;
     }
-    if( PARAM_FIELD_ENCODE )
+    /* --keyint/--min-keyint count frames; internally a keyframe interval is
+     * counted in coded fields.  b_open only: these are not copied by
+     * encoder_try_reconfig(), so converting them again on every reconfig would
+     * double the GOP length each time it is called. */
+    if( PARAM_FIELD_ENCODE && b_open )
     {
-        // FIXME: should this be part of the API for field encoding
         if( 1 < h->param.i_keyint_max && h->param.i_keyint_max < X264_KEYINT_MAX_INFINITE )
             h->param.i_keyint_max <<= 1;
         h->param.i_keyint_max = x264_clip3( h->param.i_keyint_max, 1, X264_KEYINT_MAX_INFINITE );
@@ -1119,7 +1128,7 @@ static int validate_parameters( x264_t *h, int b_open )
         h->param.i_fps_den = 1;
     }
     float fps = (float)h->param.i_fps_num / h->param.i_fps_den;
-    if( PARAM_FIELD_ENCODE )
+    if( PARAM_FIELD_ENCODE && b_open )
     {
         if( h->param.i_keyint_min != X264_KEYINT_MIN_AUTO )
             if( 0 < h->param.i_keyint_min && h->param.i_keyint_min < X264_KEYINT_MAX_INFINITE )
