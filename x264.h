@@ -45,7 +45,12 @@ extern "C" {
 
 #include "x264_config.h"
 
-#define X264_BUILD 155
+#define X264_BUILD 156
+
+/* This build supports field encoding (x264_param_t.b_field_encode), which adds
+ * a member to x264_param_t; X264_BUILD is bumped so that a caller built against
+ * a stock x264.h fails to link rather than passing a mismatched struct. */
+#define X264_HAVE_FIELD_ENCODE 1
 
 /* Application developers planning to link against a shared library version of
  * libx264 from a Microsoft Visual Studio or similar development environment
