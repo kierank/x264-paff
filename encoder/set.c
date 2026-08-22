@@ -813,8 +813,12 @@ int x264_sei_avcintra_vanc_write( x264_t *h, bs_t *s, int len )
 int x264_validate_levels( x264_t *h, int verbose )
 {
     int ret = 0;
+    /* mbs is per coded picture (a field in field-encode mode); the level's
+     * frame-size and DPB limits are per frame, while MaxMBPS is per second and
+     * so pairs with the coded-picture count. */
     int mbs = h->sps->i_mb_width * h->sps->i_mb_height;
-    int dpb = mbs * h->sps->vui.i_max_dec_frame_buffering;
+    int frame_mbs = mbs << !(h->sps->b_frame_mbs_only || h->sps->b_half_height);
+    int dpb = frame_mbs * h->sps->vui.i_max_dec_frame_buffering;
     int cbp_factor = h->sps->i_profile_idc>=PROFILE_HIGH422 ? 16 :
                      h->sps->i_profile_idc==PROFILE_HIGH10 ? 12 :
                      h->sps->i_profile_idc==PROFILE_HIGH ? 5 : 4;
@@ -826,14 +830,14 @@ int x264_validate_levels( x264_t *h, int verbose )
     /* In field-encode mode i_mb_height is the height of a single field, so the
      * full frame is twice as tall; MBAFF already stores the full frame height. */
     int frame_mb_height = h->sps->i_mb_height << !(h->sps->b_frame_mbs_only || h->sps->b_half_height);
-    if( l->frame_size < mbs
+    if( l->frame_size < frame_mbs
         || l->frame_size*8 < h->sps->i_mb_width * h->sps->i_mb_width
         || l->frame_size*8 < frame_mb_height * frame_mb_height )
         ERROR( "frame MB size (%dx%d) > level limit (%d)\n",
                h->sps->i_mb_width, frame_mb_height, l->frame_size );
     if( dpb > l->dpb )
         ERROR( "DPB size (%d frames, %d mbs) > level limit (%d frames, %d mbs)\n",
-                h->sps->vui.i_max_dec_frame_buffering, dpb, l->dpb / mbs, l->dpb );
+                h->sps->vui.i_max_dec_frame_buffering, dpb, l->dpb / frame_mbs, l->dpb );
 
 #define CHECK( name, limit, val ) \
     if( (val) > (limit) ) \
