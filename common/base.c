@@ -1382,6 +1382,7 @@ char *x264_param2string( x264_param_t *p, int b_res )
     s += sprintf( s, " nr=%d", p->analyse.i_noise_reduction );
     s += sprintf( s, " decimate=%d", p->analyse.b_dct_decimate );
     s += sprintf( s, " interlaced=%s", p->b_interlaced ? p->b_tff ? "tff" : "bff" : p->b_fake_interlaced ? "fake" : "0" );
+    s += sprintf( s, " field_encode=%d", p->b_field_encode );
     s += sprintf( s, " bluray_compat=%d", p->b_bluray_compat );
     if( p->b_stitchable )
         s += sprintf( s, " stitchable=%d", p->b_stitchable );

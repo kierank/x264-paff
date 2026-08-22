@@ -941,6 +941,7 @@ int x264_ratecontrol_new( x264_t *h )
             CMP_OPT_FIRST_PASS( "intra_refresh", h->param.b_intra_refresh );
             CMP_OPT_FIRST_PASS( "open_gop", h->param.b_open_gop );
             CMP_OPT_FIRST_PASS( "bluray_compat", h->param.b_bluray_compat );
+            CMP_OPT_FIRST_PASS( "field_encode", h->param.b_field_encode );
 
             if( (p = strstr( opts, "interlaced=" )) )
             {
