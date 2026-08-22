@@ -168,7 +168,11 @@ static void slice_header_init( x264_t *h, x264_slice_header_t *sh,
 
     sh->b_mbaff = PARAM_INTERLACED;
     sh->b_field_pic = PARAM_FIELD_ENCODE;
-    sh->b_bottom_field = h->fenc->i_pic_struct == PIC_STRUCT_BOTTOM;
+    /* Derive the coded field parity from the field index and the field order.
+     * i_pic_struct is a display hint the caller may set itself, so it must not
+     * be able to mis-signal bottom_field_flag; this also keeps the parity in
+     * step with h->mb.i_mvy_offset, which is derived the same way. */
+    sh->b_bottom_field = PARAM_FIELD_ENCODE && (((h->fenc->i_frame & 1) ^ !h->param.b_tff) != 0);
 
     sh->i_idr_pic_id = i_idr_pic_id;
 
