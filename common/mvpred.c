@@ -589,7 +589,7 @@ void x264_mb_predict_mv_ref16x16( x264_t *h, int i_list, int i_ref, int16_t mvc[
 #define SET_TMVP( dx, dy ) \
         { \
             int mb_index = h->mb.i_mb_xy + dx + dy*h->mb.i_mb_stride; \
-            int scale = (curpoc - refpoc) * l0->inv_ref_poc[MB_INTERLACED&field]; \
+            int scale = (curpoc - refpoc) * l0->inv_ref_poc[MB_MBAFF_FIELD&field]; \
             mvc[i][0] = (l0->mv16x16[mb_index][0]*scale + 128) >> 8; \
             mvc[i][1] = (l0->mv16x16[mb_index][1]*scale + 128) >> 8; \
             i++; \
