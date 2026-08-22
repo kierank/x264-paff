@@ -714,7 +714,7 @@ static int validate_parameters( x264_t *h, int b_open )
         return -1;
     }
 
-    if( PARAM_INTERLACED )
+    if( PARAM_INTERLACED || PARAM_FIELD_ENCODE )
         h->param.b_pic_struct = 1;
 
     if( h->param.i_avcintra_class )
