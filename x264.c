@@ -1908,6 +1908,15 @@ static int encode( x264_param_t *param, cli_opt_t *opt )
     {
         FAIL_IF_ERROR2( param->b_vfr_input, "field encoding is not compatible with vfr\n" );
         FAIL_IF_ERROR2( param->i_height & 1, "field encoding needs an even frame height (%d)\n", param->i_height );
+        /* i_height below becomes the coded field height, so the vertical crop has
+         * to follow it into field lines.  This is what sps->b_half_height does for
+         * MBAFF; left in frame lines it would be signalled twice over, because
+         * CropUnitY is 4 once frame_mbs_only_flag is 0. */
+        FAIL_IF_ERROR2( (param->crop_rect.i_top | param->crop_rect.i_bottom) & 1,
+                        "field encoding needs even vertical crop values (%d, %d)\n",
+                        param->crop_rect.i_top, param->crop_rect.i_bottom );
+        param->crop_rect.i_top >>= 1;
+        param->crop_rect.i_bottom >>= 1;
         param->i_fps_num <<= 1;
         param->i_height >>= 1;
     }

@@ -351,7 +351,15 @@ typedef struct x264_param_t
     int         i_cabac_init_idc;
 
     int         b_interlaced;
-    int         b_field_encode;     /* With field encoding, libx264 takes separate fields */
+    /* Field encoding: libx264 takes one field per x264_encoder_encode() call and
+     * codes it as a field picture (field_pic_flag=1); the caller separates the
+     * fields.  Field order follows b_tff.  Mutually exclusive with b_interlaced;
+     * B-frames are not supported and are disabled.  i_height, crop_rect.i_top and
+     * crop_rect.i_bottom are the coded FIELD's, i.e. half the frame's, and
+     * i_fps_num/i_fps_den are the field rate.  i_keyint_max, i_keyint_min and
+     * i_frame_reference are given in frames and converted internally;
+     * x264_encoder_parameters() reports them already converted. */
+    int         b_field_encode;
     int         b_constrained_intra;
 
     int         i_cqm_preset;
