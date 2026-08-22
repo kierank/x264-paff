@@ -554,7 +554,10 @@ void x264_predict_lossless_chroma( x264_t *h, int i_mode )
 
 void x264_predict_lossless_4x4( x264_t *h, pixel *p_dst, int p, int idx, int i_mode )
 {
-    int stride = h->fenc->i_stride[p] << MB_INTERLACED;
+    /* p_fenc_plane points into the frame-layout plane; only an MBAFF field
+     * macroblock reads it at doubled stride.  A field picture is a normal
+     * frame-shaped picture (MB_INTERLACED is 1 but SLICE_MBAFF is 0). */
+    int stride = h->fenc->i_stride[p] << MB_MBAFF_FIELD;
     pixel *p_src = h->mb.pic.p_fenc_plane[p] + block_idx_x[idx]*4 + block_idx_y[idx]*4 * stride;
 
     if( i_mode == I_PRED_4x4_V )
@@ -574,7 +577,7 @@ void x264_predict_lossless_4x4( x264_t *h, pixel *p_dst, int p, int idx, int i_m
 
 void x264_predict_lossless_8x8( x264_t *h, pixel *p_dst, int p, int idx, int i_mode, pixel edge[36] )
 {
-    int stride = h->fenc->i_stride[p] << MB_INTERLACED;
+    int stride = h->fenc->i_stride[p] << MB_MBAFF_FIELD;
     pixel *p_src = h->mb.pic.p_fenc_plane[p] + (idx&1)*8 + (idx>>1)*8*stride;
 
     if( i_mode == I_PRED_8x8_V )
@@ -594,7 +597,7 @@ void x264_predict_lossless_8x8( x264_t *h, pixel *p_dst, int p, int idx, int i_m
 
 void x264_predict_lossless_16x16( x264_t *h, int p, int i_mode )
 {
-    int stride = h->fenc->i_stride[p] << MB_INTERLACED;
+    int stride = h->fenc->i_stride[p] << MB_MBAFF_FIELD;
     pixel *p_dst = h->mb.pic.p_fdec[p];
 
     if( i_mode == I_PRED_16x16_V )
